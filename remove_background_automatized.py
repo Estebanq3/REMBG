@@ -3,16 +3,24 @@ from PIL import Image
 import multiprocessing
 from joblib import Parallel, delayed
 import argparse
+import datetime
+import shutil
+import re
 import os
 
 """
     Variables estáticas globales (define)
 """
+OUTPUT_IMAGES_DIRECTORY = str(datetime.datetime.now())
+OUTPUT_IMAGES_DIRECTORY = re.sub(r"[^0-9]", "", OUTPUT_IMAGES_DIRECTORY)
+os.makedirs(OUTPUT_IMAGES_DIRECTORY)
+OUTPUT_IMAGES_DIRECTORY += "/"
+
 #INPUT_IMAGES_DIRECTORY = './input_images/'
-OUTPUT_IMAGES_DIRECTORY = './output_images/'
 BACKGROUND_IMAGES_DIRECTORY = './backgrounds/'
 MERGE_IMAGES_DIRECTORY = './rembg_results/'
 OUTPUT_PREFIX_NAME = 'rembg_'
+MERGE_PREFIX_NAME = 'merge_'
 
 
 """
@@ -44,6 +52,7 @@ def get_files_in_directory(directory):
 """
 def generate_images_w_background(input_images_directory, file):
     with open(input_images_directory + file, 'rb') as i:
+        print(OUTPUT_IMAGES_DIRECTORY)
         with open(OUTPUT_IMAGES_DIRECTORY + OUTPUT_PREFIX_NAME + file.split(".")[0] + ".jpg", 'wb') as o:
             input = i.read()
             output = remove(input)
@@ -85,7 +94,7 @@ def merge_image_background(background_name, image_name):
     image = Image.open(OUTPUT_IMAGES_DIRECTORY + image_name, 'r')
 
         
-    print(image_name)
+    #print(image_name)
 
     # Resize the image to fit within the background
     #image = image.resize(background.size)  # Adjust the size as needed
@@ -103,8 +112,14 @@ def merge_image_background(background_name, image_name):
 
     image_name = image_name.split(".")[0]
 
+    #Estampa de tiempo
+    time_stamp_differentiator = str(datetime.datetime.now())
+    time_stamp_differentiator = re.sub(r"[^0-9]", "", OUTPUT_IMAGES_DIRECTORY)
+
     # Save the resulting image
-    composite.save(MERGE_IMAGES_DIRECTORY + 'merge_' + background_name + '_' + image_name + '.png')
+    composite.save(MERGE_IMAGES_DIRECTORY + background_name + '_' + image_name + time_stamp_differentiator + '.png')
+
+    return "Finalizado con exito"
 
 """
     Fusiona una imagen recortada con múltiples fondos.
@@ -125,11 +140,8 @@ def parallelize_generate_images_w_background(input_images_directory):
     images_files = get_files_in_directory(input_images_directory)
     index_images = loop_files(images_files)
     n_jobs = multiprocessing.cpu_count()
-
     Parallel(n_jobs=n_jobs)(delayed(generate_images_w_background)(input_images_directory, i) for i in images_files)
     rembg_files = get_files_in_directory(OUTPUT_IMAGES_DIRECTORY)
-    
-    
     return  n_jobs,index_images,rembg_files
 
 
@@ -139,9 +151,9 @@ def main(input_directory, unique_background, background):
         Parallel(n_jobs=n_jobs)(delayed(merge_image_background)(background,rembg_files[j]) for j in index_images)
     else:
         n_jobs,index_images,rembg_files = parallelize_generate_images_w_background(input_directory)
-        print(index_images)
-        print(rembg_files)
         Parallel(n_jobs=n_jobs)(delayed(image_with_many_backgrounds)(background,rembg_files[j]) for j in index_images)
+    
+    shutil.rmtree(OUTPUT_IMAGES_DIRECTORY)
 
 
 if __name__ == "__main__":
@@ -155,5 +167,4 @@ if __name__ == "__main__":
     args.background = args.background.split(",")
 
     main(args.input_directory ,args.unique_background, args.background)
-
 
