@@ -7,6 +7,9 @@ import datetime
 import shutil
 import re
 import os
+from fastapi import FastAPI
+
+app = FastAPI()
 
 """
     Variables estáticas globales (define)
@@ -52,7 +55,7 @@ def get_files_in_directory(directory):
 """
 def generate_images_w_background(input_images_directory, file):
     with open(input_images_directory + file, 'rb') as i:
-        print(OUTPUT_IMAGES_DIRECTORY)
+        #print(OUTPUT_IMAGES_DIRECTORY)
         with open(OUTPUT_IMAGES_DIRECTORY + OUTPUT_PREFIX_NAME + file.split(".")[0] + ".jpg", 'wb') as o:
             input = i.read()
             output = remove(input)
@@ -144,7 +147,6 @@ def parallelize_generate_images_w_background(input_images_directory):
     rembg_files = get_files_in_directory(OUTPUT_IMAGES_DIRECTORY)
     return  n_jobs,index_images,rembg_files
 
-
 def main(input_directory, unique_background, background):
     if unique_background == "True":
         n_jobs,index_images,rembg_files = parallelize_generate_images_w_background(input_directory)
@@ -152,9 +154,8 @@ def main(input_directory, unique_background, background):
     else:
         n_jobs,index_images,rembg_files = parallelize_generate_images_w_background(input_directory)
         Parallel(n_jobs=n_jobs)(delayed(image_with_many_backgrounds)(background,rembg_files[j]) for j in index_images)
-    
-    shutil.rmtree(OUTPUT_IMAGES_DIRECTORY)
 
+    shutil.rmtree(OUTPUT_IMAGES_DIRECTORY)
 
 if __name__ == "__main__":
     parser = argparse = argparse.ArgumentParser()
@@ -164,7 +165,10 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
+    
+
     args.background = args.background.split(",")
 
     main(args.input_directory ,args.unique_background, args.background)
+
 
