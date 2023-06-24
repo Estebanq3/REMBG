@@ -8,11 +8,11 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY ./app ./app
-COPY ./backgrounds ./backgrounds
-COPY ./tmp_copia_local ./tmp_copia_local
-COPY ./tmp_copia_automatica ./tmp_copia_automatica
+COPY ./appv1 ./appv1
+COPY ./fotobru-api/web/imgs/FotoBRU/backgrounds ./backgrounds
+COPY ./fotobru-api/web/imgs/FotoBRU/tmpcopialocal ./tmp_copia_local
 
-WORKDIR /fastapi-rembg-app/app
+
+WORKDIR /fastapi-rembg-app/appv1
 
 CMD ["uvicorn","app_API:app", "--host", "0.0.0.0", "--reload"]

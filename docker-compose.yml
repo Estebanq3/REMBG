@@ -1,0 +1,52 @@
+version: '2'
+services:
+
+  mysql55:
+    platform: linux/x86_64
+    image: "mysql:5.7"
+    ports:
+      - "3306:3306"
+    command: mysqld --sql_mode=""
+    environment:
+      MYSQL_ROOT_PASSWORD: "globaloxs"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      TZ: "America/Mexico_City"
+  php55:
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+    depends_on:
+      - mysql55
+    image: "jusart92/fotobru:requests_python2.7"
+    ports:
+      - "80:80"
+    volumes:
+      - "./:/var/www/html:z"
+      - "./apache.conf:/etc/apache2/apache2.conf:z"
+    links:
+      - mysql55
+    environment:
+      TZ: "America/Mexico_City"
+    restart: always
+  # java8:
+  #   image: "adoptopenjdk/openjdk8"
+  #   depends_on:
+  #     - mysql55
+  #   volumes:
+  #     - "./fotobru-api/web/imgs:/imgs"
+  #     - "./fotobru-api/web/carga.jar:/imgs/carga.jar"
+  #   env_file:
+  #     - ./variables.env
+  #   command: ["java","-jar","imgs/carga.jar"]
+  #   restart: always
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app_API:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./appv1:/appv1
+    ports:
+      - 8000:8000
+    restart: always

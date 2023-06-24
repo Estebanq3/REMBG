@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from remove_background_automatized import *
+from fastapi.params import Depends, Query
 
 #Variables globales para definir el API, asi como para definir los directorios
 app = FastAPI()
@@ -31,37 +32,29 @@ def get_image_names(directory):
     return image_names
 
 '''
+    Funcion para eliminar todas las imagenes de una carpeta
+'''
+def delete_files_in_directory(directory):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if "rembg" in file:
+                return True
+            else:
+                file_path = os.path.join(root, file)
+                os.remove(file_path)
+
+'''
     Utilizacion de FastApi para poder hacer un call de la funcion de procesamiento de imagenenes en la direccion root
 '''
-@app.get("/")
-def call():
-
-    backgrounds_list = get_image_names(BACKGROUNDS)
-    files_processed = []
+@app.get("/fastApi/v1/rembg/")
+def call(input_directory: str):
+    try:
+        backgrounds_list = get_image_names(BACKGROUNDS)
+        files_processed = []
+        files_processed.append(main(TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + input_directory,False, backgrounds_list, TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + input_directory)) 
+        delete_files_in_directory(TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + input_directory)
+        return "Se han añadido a la lista nuevas fotos por procesar"
+    except:
+        return "Error: No se han añadido a la lista nuevas fotos por procesar"
     
-    #obtener los directorios que se encuentren en tmp_copia_local
-    directories = get_directory_names(TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT[:-1])
-    
-    #  Ciclo para tmp_copia_local
-    for i in directories:
-        #Si existe un ouput ya creado por un run anterior elimina el output
-        if os.path.exists(TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + '/' + i + '/Output'):
-            shutil.rmtree(TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + '/' + i + '/Output')
-        #Crea el directorio output nuevo
-        os.makedirs(TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + '/' + i + '/Output')
-        files_processed.append(main(TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + i,False, backgrounds_list, TMP_COPIA_LOCAL_EACH_DIRECTORY_OUTPUT + i + OUTPUT_MERGE)) 
-
-    #obtener los directorios que se encuentren en tmp_copia_automatica
-    directories = get_directory_names(TMP_COPIA_AUTOMATICA_EACH_DIRECTORY_OUTPUT[:-1])
-
-    #   Ciclo para tmp_copia_automatica
-    for i in directories:
-        #Si existe un ouput ya creado por un run anterior elimina el output
-        if os.path.exists(TMP_COPIA_AUTOMATICA_EACH_DIRECTORY_OUTPUT + '/' + i + '/Output'):
-            shutil.rmtree(TMP_COPIA_AUTOMATICA_EACH_DIRECTORY_OUTPUT + '/' + i + '/Output')
-        #Crea el directorio output nuevo
-        os.makedirs(TMP_COPIA_AUTOMATICA_EACH_DIRECTORY_OUTPUT + '/' + i + '/Output')
-        files_processed.append(main(TMP_COPIA_AUTOMATICA_EACH_DIRECTORY_OUTPUT + i,False, backgrounds_list, TMP_COPIA_AUTOMATICA_EACH_DIRECTORY_OUTPUT + i + OUTPUT_MERGE)) 
-
-    return files_processed
 

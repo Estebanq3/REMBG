@@ -196,7 +196,7 @@ def main(input_directory, unique_background, background, output_merge_results):
         
         #print("Todas las fotos han sido procesadas adecuadamente")
 
-        return "Fotos procesadas:" + str(rembg_files)
+        #return "Fotos procesadas:" + str(rembg_files)
     #except:
         #print("Error procesando las fotos")
     #   return "Fotos que no han podido ser procesadas"  + str(rembg_files)
